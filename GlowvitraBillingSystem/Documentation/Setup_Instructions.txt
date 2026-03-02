@@ -1,0 +1,86 @@
+Glowvitra Billing System - Setup Instructions
+=============================================
+
+1) Open SQL Server Management Studio (SSMS)
+-------------------------------------------
+- Press Windows key and search for "SQL Server Management Studio".
+- Open SSMS.
+- In "Connect to Server", select your SQL Server instance and click Connect.
+
+2) Create a New Database
+------------------------
+- Open a New Query window in SSMS.
+- You can run only the first section from Database/database_script.sql to create the database.
+- Or run the full script directly (it already includes CREATE DATABASE GlowvitraBillingDB).
+
+3) Run database_script.sql
+--------------------------
+- In SSMS, click File -> Open -> File...
+- Open: GlowvitraBillingSystem/Database/database_script.sql
+- Click Execute.
+
+4) Verify Tables are Created
+----------------------------
+Run this query in SSMS:
+
+USE GlowvitraBillingDB;
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE';
+
+Expected tables:
+- State
+- SellerProfile
+- Product
+- Invoice
+- InvoiceItems
+
+5) Update Connection String in Backend
+--------------------------------------
+IMPORTANT: Only change the connection string in appsettings.json.
+
+Exact file:
+- GlowvitraBillingSystem/Backend/appsettings.json
+
+Exact section:
+- ConnectionStrings -> DefaultConnection
+
+Current placeholder:
+Server=YOUR_SERVER_NAME;Database=GlowvitraBillingDB;Trusted_Connection=True;TrustServerCertificate=True;
+
+You must replace YOUR_SERVER_NAME only.
+
+6) Install Required NuGet Packages
+----------------------------------
+Open terminal in GlowvitraBillingSystem/Backend and run:
+- dotnet restore
+
+(Required packages are already listed in GlowvitraBilling.Api.csproj)
+
+7) Install Angular Dependencies
+-------------------------------
+Open terminal in GlowvitraBillingSystem/Frontend and run:
+- npm install
+
+8) Run Backend
+--------------
+Open terminal in GlowvitraBillingSystem/Backend and run:
+- dotnet run
+
+Default backend URL:
+- http://localhost:5233
+
+9) Run Frontend
+---------------
+Open another terminal in GlowvitraBillingSystem/Frontend and run:
+- npm start
+
+Default frontend URL:
+- http://localhost:4200
+
+10) Open in Browser
+-------------------
+Open:
+- http://localhost:4200
+
+Notes:
+- Generate PDF button sends invoice data to backend.
+- Backend creates PDF with QuestPDF and returns it for automatic download.

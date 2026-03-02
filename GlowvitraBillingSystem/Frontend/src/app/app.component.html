@@ -1,0 +1,82 @@
+<div class="page">
+  <header class="top-bar">
+    <div class="brand">Glowvitra Billing System</div>
+    <div class="meta">Invoice: <strong>{{ invoiceNumber }}</strong></div>
+    <div class="meta">Date: {{ invoiceDate | date:'dd/MM/yyyy' }}</div>
+  </header>
+
+  <main class="content-grid">
+    <section class="left-column panel">
+      <div class="section-title">Customer Details</div>
+      <div class="form-grid two-col">
+        <input [(ngModel)]="customer.name" placeholder="Customer Name" />
+        <input [(ngModel)]="customer.phone" placeholder="Phone" />
+      </div>
+      <input [(ngModel)]="customer.address" placeholder="Address" />
+      <div class="form-grid two-col">
+        <select [(ngModel)]="customer.stateId">
+          <option [ngValue]="0">State</option>
+          <option *ngFor="let state of states" [ngValue]="state.id">{{ state.name }}</option>
+        </select>
+        <input [(ngModel)]="customer.pincode" placeholder="Pincode" />
+      </div>
+
+      <div class="section-title spacer">Add Products</div>
+      <input #searchBox placeholder="Search Product" (input)="searchProduct(searchBox.value)" />
+      <div class="suggestions" *ngIf="suggestions.length">
+        <div *ngFor="let p of suggestions" (click)="chooseProduct(p)">{{ p.name }} (HSN {{ p.hsnCode }})</div>
+      </div>
+
+      <div class="product-row">
+        <span>HSN Code <strong>{{ selectedProduct?.hsnCode || '-' }}</strong></span>
+        <span>GST: <strong>{{ selectedProduct?.gstPercent || 0 }}%</strong></span>
+        <span>Quantity: <input type="number" [(ngModel)]="qty" min="1" /></span>
+        <span>Base Price (₹) <input type="number" [(ngModel)]="price" min="0" /></span>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-green" (click)="addItem()">Add Item</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice Items</th><th>HSN</th><th>Qty</th><th>Price (₹)</th><th>Tax (₹)</th><th>Total (₹)</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of invoiceItems; let i = index">
+            <td>{{ item.productName }}</td>
+            <td>{{ item.hsnCode }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.basePrice | number:'1.2-2' }}</td>
+            <td>{{ item.taxAmount | number:'1.2-2' }}</td>
+            <td>{{ item.total | number:'1.2-2' }}</td>
+            <td><button class="icon-btn" (click)="removeItem(i)">🗑</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-total">Total Amount: ₹ {{ (subtotal + totalTax) | number:'1.2-2' }}</div>
+    </section>
+
+    <aside class="right-column panel">
+      <div class="section-title">Invoice Summary</div>
+      <div class="seller-card">
+        <div class="seller-name">{{ seller?.sellerName || 'Glowvitra' }}</div>
+        <div>{{ seller?.address }}</div>
+        <div>GSTIN: {{ seller?.gstin }}</div>
+      </div>
+      <div class="summary-row"><span>Subtotal:</span><strong>₹ {{ subtotal | number:'1.2-2' }}</strong></div>
+      <div class="summary-row" *ngIf="isIntraState"><span>CGST (9%):</span><strong>₹ {{ cgst | number:'1.2-2' }}</strong></div>
+      <div class="summary-row" *ngIf="isIntraState"><span>SGST (9%):</span><strong>₹ {{ sgst | number:'1.2-2' }}</strong></div>
+      <div class="summary-row" *ngIf="!isIntraState"><span>IGST (18%):</span><strong>₹ {{ igst | number:'1.2-2' }}</strong></div>
+      <div class="summary-row"><span>Round Off:</span><strong>₹ {{ roundOff | number:'1.2-2' }}</strong></div>
+      <div class="summary-row grand"><span>Grand Total:</span><strong>₹ {{ grandTotal | number:'1.2-2' }}</strong></div>
+
+      <div class="bottom-btns">
+        <button class="btn btn-green" (click)="generatePdf()">Generate PDF</button>
+        <button class="btn btn-red" (click)="clearInvoice()">Clear Invoice</button>
+      </div>
+    </aside>
+  </main>
+</div>
