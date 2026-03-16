@@ -15,6 +15,14 @@ public class InvoicesController : ControllerBase
         _invoiceService = invoiceService;
     }
 
+
+    [HttpGet("next-number")]
+    public async Task<IActionResult> GetNextNumber()
+    {
+        var invoiceNumber = await _invoiceService.GetNextInvoiceNumberAsync();
+        return Ok(invoiceNumber);
+    }
+
     [HttpPost("summary")]
     public async Task<IActionResult> GetSummary([FromBody] InvoiceCreateRequest request)
     {

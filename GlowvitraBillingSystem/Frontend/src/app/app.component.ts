@@ -23,7 +23,7 @@ interface InvoiceItem {
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  invoiceNumber = `GV-${new Date().getFullYear()}-0001`;
+  invoiceNumber = '';
   invoiceDate = new Date();
   states: StateModel[] = [];
   seller?: SellerModel;
@@ -41,6 +41,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.api.getStates().subscribe((data) => (this.states = data));
     this.api.getSeller().subscribe((data) => (this.seller = data));
+    this.loadNextInvoiceNumber();
   }
 
   searchProduct(query: string): void {
@@ -96,6 +97,10 @@ export class AppComponent implements OnInit {
     this.price = 0;
   }
 
+  private loadNextInvoiceNumber(): void {
+    this.api.getNextInvoiceNumber().subscribe((invoiceNumber) => (this.invoiceNumber = invoiceNumber));
+  }
+
   generatePdf(): void {
     const payload = {
       customerName: this.customer.name,
@@ -120,6 +125,7 @@ export class AppComponent implements OnInit {
       a.download = `${this.invoiceNumber}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+      this.loadNextInvoiceNumber();
     });
   }
 }

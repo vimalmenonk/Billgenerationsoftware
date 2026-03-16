@@ -18,6 +18,10 @@ export class BillingApiService {
     return this.http.get<ProductModel[]>(`${this.baseUrl}/products/search`, { params: { query } });
   }
 
+  getNextInvoiceNumber(): Observable<string> {
+    return this.http.get(`${this.baseUrl}/invoices/next-number`, { responseType: 'text' });
+  }
+
   generatePdf(payload: unknown): Observable<Blob> {
     return this.http.post(`${this.baseUrl}/invoices/generate-pdf`, payload, { responseType: 'blob' });
   }

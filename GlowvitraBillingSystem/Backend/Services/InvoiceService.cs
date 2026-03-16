@@ -21,7 +21,7 @@ public class InvoiceService : IInvoiceService
     public async Task<InvoiceSummaryResponse> GetDraftSummaryAsync(int customerStateId, IReadOnlyCollection<InvoiceItemRequest> items)
     {
         var seller = await GetSellerAsync();
-        var invoiceNumber = await GenerateInvoiceNumberAsync();
+        var invoiceNumber = await GetNextInvoiceNumberAsync();
         var intraState = seller.StateId == customerStateId;
         var gst = _gstService.Calculate(items, intraState);
 
@@ -42,7 +42,7 @@ public class InvoiceService : IInvoiceService
     public async Task<(byte[] PdfBytes, string InvoiceNumber)> GenerateInvoicePdfAsync(InvoiceCreateRequest request)
     {
         var seller = await GetSellerAsync();
-        var invoiceNumber = await GenerateInvoiceNumberAsync();
+        var invoiceNumber = await GetNextInvoiceNumberAsync();
         var intraState = seller.StateId == request.CustomerStateId;
         var gst = _gstService.Calculate(request.Items, intraState);
 
@@ -88,12 +88,30 @@ public class InvoiceService : IInvoiceService
     private async Task<SellerProfile> GetSellerAsync() =>
         await _dbContext.SellerProfiles.Include(s => s.State).FirstAsync();
 
-    private async Task<string> GenerateInvoiceNumberAsync()
+
+    public async Task<string> GetNextInvoiceNumberAsync()
     {
         var year = DateTime.Now.Year;
         var prefix = $"GV-{year}-";
-        var count = await _dbContext.Invoices.CountAsync(i => i.InvoiceNumber.StartsWith(prefix));
-        return $"{prefix}{(count + 1):D4}";
+
+        var latestInvoiceNumber = await _dbContext.Invoices
+            .Where(i => i.InvoiceNumber.StartsWith(prefix))
+            .OrderByDescending(i => i.Id)
+            .Select(i => i.InvoiceNumber)
+            .FirstOrDefaultAsync();
+
+        if (string.IsNullOrWhiteSpace(latestInvoiceNumber))
+        {
+            return $"{prefix}0001";
+        }
+
+        var sequencePart = latestInvoiceNumber.Split('-').LastOrDefault();
+        if (!int.TryParse(sequencePart, out var sequence))
+        {
+            sequence = 0;
+        }
+
+        return $"{prefix}{(sequence + 1):D4}";
     }
 
     private static SellerResponse MapSeller(SellerProfile seller) => new()
