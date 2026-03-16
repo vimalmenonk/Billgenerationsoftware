@@ -67,9 +67,9 @@ public class InvoiceService : IInvoiceService
                 ProductName = i.ProductName,
                 HsnCode = i.HsnCode,
                 Quantity = i.Quantity,
-                BasePrice = i.BasePrice,
-                TaxAmount = Math.Round((i.BasePrice * i.Quantity) * (i.GstPercent / 100m), 2),
-                LineTotal = Math.Round((i.BasePrice * i.Quantity) + ((i.BasePrice * i.Quantity) * (i.GstPercent / 100m)), 2)
+                BasePrice = Math.Round((i.BasePrice * i.Quantity) / (1m + (i.GstPercent / 100m)), 2),
+                TaxAmount = Math.Round((i.BasePrice * i.Quantity) - ((i.BasePrice * i.Quantity) / (1m + (i.GstPercent / 100m))), 2),
+                LineTotal = Math.Round(i.BasePrice * i.Quantity, 2)
             }).ToList()
         };
 

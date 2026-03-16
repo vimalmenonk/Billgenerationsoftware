@@ -6,12 +6,23 @@ public class GstCalculationService : IGstCalculationService
 {
     public GstBreakdown Calculate(IReadOnlyCollection<InvoiceItemRequest> items, bool intraStateSale)
     {
-        var subtotal = items.Sum(i => i.BasePrice * i.Quantity);
-        var totalTax = items.Sum(i => (i.BasePrice * i.Quantity) * (i.GstPercent / 100m));
+        var subtotal = Math.Round(items.Sum(i =>
+        {
+            var lineTotal = i.BasePrice * i.Quantity;
+            var baseAmount = lineTotal / (1m + (i.GstPercent / 100m));
+            return baseAmount;
+        }), 2);
+
+        var totalTax = Math.Round(items.Sum(i =>
+        {
+            var lineTotal = i.BasePrice * i.Quantity;
+            var baseAmount = lineTotal / (1m + (i.GstPercent / 100m));
+            return lineTotal - baseAmount;
+        }), 2);
 
         var breakdown = new GstBreakdown
         {
-            Subtotal = Math.Round(subtotal, 2)
+            Subtotal = subtotal
         };
 
         if (intraStateSale)
@@ -28,10 +39,9 @@ public class GstCalculationService : IGstCalculationService
         }
 
         var gross = breakdown.Subtotal + breakdown.CgstAmount + breakdown.SgstAmount + breakdown.IgstAmount;
-        var rounded = Math.Round(gross, 0, MidpointRounding.AwayFromZero);
 
-        breakdown.RoundOff = Math.Round(rounded - gross, 2);
-        breakdown.GrandTotal = Math.Round(gross + breakdown.RoundOff, 2);
+        breakdown.RoundOff = 0m;
+        breakdown.GrandTotal = Math.Round(gross, 2);
 
         return breakdown;
     }
