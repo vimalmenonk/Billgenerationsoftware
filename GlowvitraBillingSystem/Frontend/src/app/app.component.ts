@@ -9,7 +9,8 @@ interface InvoiceItem {
   hsnCode: string;
   gstPercent: number;
   quantity: number;
-  basePrice: number;
+  unitPrice: number;
+  baseAmount: number;
   taxAmount: number;
   total: number;
 }
@@ -54,17 +55,21 @@ export class AppComponent implements OnInit {
 
   addItem(): void {
     if (!this.selectedProduct || this.qty <= 0 || this.price <= 0) { return; }
-    const base = this.qty * this.price;
-    const tax = +(base * (this.selectedProduct.gstPercent / 100)).toFixed(2);
+    const total = +(this.qty * this.price).toFixed(2);
+    const gstFactor = 1 + (this.selectedProduct.gstPercent / 100);
+    const base = +(total / gstFactor).toFixed(2);
+    const tax = +(total - base).toFixed(2);
+
     this.invoiceItems.push({
       productId: this.selectedProduct.id,
       productName: this.selectedProduct.name,
       hsnCode: this.selectedProduct.hsnCode,
       gstPercent: this.selectedProduct.gstPercent,
       quantity: this.qty,
-      basePrice: this.price,
+      unitPrice: this.price,
+      baseAmount: base,
       taxAmount: tax,
-      total: +(base + tax).toFixed(2)
+      total
     });
 
     this.selectedProduct = undefined;
@@ -74,17 +79,14 @@ export class AppComponent implements OnInit {
 
   removeItem(index: number): void { this.invoiceItems.splice(index, 1); }
 
-  get subtotal(): number { return this.invoiceItems.reduce((sum, i) => sum + (i.basePrice * i.quantity), 0); }
+  get subtotal(): number { return +this.invoiceItems.reduce((sum, i) => sum + i.baseAmount, 0).toFixed(2); }
   get isIntraState(): boolean { return !!this.seller && this.seller.stateId === this.customer.stateId; }
   get cgst(): number { return this.isIntraState ? +(this.totalTax / 2).toFixed(2) : 0; }
   get sgst(): number { return this.isIntraState ? +(this.totalTax / 2).toFixed(2) : 0; }
   get igst(): number { return this.isIntraState ? 0 : this.totalTax; }
   get totalTax(): number { return +this.invoiceItems.reduce((s, i) => s + i.taxAmount, 0).toFixed(2); }
-  get roundOff(): number {
-    const gross = this.subtotal + this.totalTax;
-    return +(Math.round(gross) - gross).toFixed(2);
-  }
-  get grandTotal(): number { return +(this.subtotal + this.totalTax + this.roundOff).toFixed(2); }
+  get roundOff(): number { return 0; }
+  get grandTotal(): number { return +(this.subtotal + this.totalTax).toFixed(2); }
 
   clearInvoice(): void {
     this.customer = { name: '', phone: '', address: '', stateId: 0, pincode: '' };
@@ -107,7 +109,7 @@ export class AppComponent implements OnInit {
         hsnCode: i.hsnCode,
         gstPercent: i.gstPercent,
         quantity: i.quantity,
-        basePrice: i.basePrice
+        basePrice: i.unitPrice
       }))
     };
 
